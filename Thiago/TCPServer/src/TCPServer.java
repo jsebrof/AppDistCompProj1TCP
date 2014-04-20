@@ -10,11 +10,12 @@ class TCPServer
 {
 	static long timestart;
 	static ServerSocket serverSocket = null;
-	static int HOPS = 5;
+	static int HOPS = 3;
 	static int timeout_ack = 500;
 	static int timeout_answer = 1000;
 	public static void main(String args[]) throws Exception
 	{
+		int i;
 		String data;
 		timestart = System.currentTimeMillis();
 		if (args.length < 1) // If there isn't at least one command line argument
@@ -93,9 +94,15 @@ class TCPServer
 						System.out.println("No value found in store for Key \"" + key + "\" at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 					}
 					outToClient.writeBytes(returnMessage + "\n"); // return requested value to the client
-					if(!waitAck(inFromClient)){
-						System.out.println("Timeout on receiving acknowledgment! Closing....");
-						break;
+					//wait for an ACK
+					i = 1;
+					while(!waitAck(inFromClient)){
+						if(i == HOPS){
+							System.out.println("Failed! Timeout on receiving acknoledgment! Closing....");
+							break;
+						}
+						outToClient.writeBytes(returnMessage + "\n");
+						i++;
 					}
 					break;
 				case "delete":
@@ -117,28 +124,26 @@ class TCPServer
 			}
 		}
 	}
-	public static boolean waitAck(BufferedReader in) throws IOException{
+
+	public static boolean waitAck(BufferedReader in) throws IOException {
 		String ack = "";
 		boolean ret = false;
 		int i = 1;
-		while (i <= HOPS) {
-			serverSocket.setSoTimeout(timeout_ack);
-			try {
-				ack = in.readLine(); // receive value packet from server
-				ack = ack.trim();
-				if (ack.matches("ack")) {
-					System.out.println("Acknowledgement received at "
-							+ (System.currentTimeMillis() - timestart)
-							+ " milliseconds. Try number " + i);
-					ret = true;
-					break;
-				}
-			} catch (SocketTimeoutException e) {
-				System.out.println("Timeout on acknowledgement at "
+
+		serverSocket.setSoTimeout(timeout_ack);
+		try {
+			ack = in.readLine(); // receive value packet from server
+			ack = ack.trim();
+			if (ack.matches("ack")) {
+				System.out.println("Acknowledgement received at "
 						+ (System.currentTimeMillis() - timestart)
 						+ " milliseconds. Try number " + i);
+				ret = true;
 			}
-			i++;
+		} catch (SocketTimeoutException e) {
+			System.out.println("Timeout on acknowledgement at "
+					+ (System.currentTimeMillis() - timestart)
+					+ " milliseconds. Try number " + i);
 		}
 		return ret;
 	}
