@@ -10,6 +10,7 @@ class TCPServer
 {
 	static long timestart;
 	static ServerSocket serverSocket = null;
+	static Socket connectionSocket = null;
 	static int HOPS = 3;
 	static int timeout_ack = 500;
 	static int timeout_answer = 1000;
@@ -40,7 +41,6 @@ class TCPServer
 			while(true)
 			{
 				System.out.println("\nWaiting to receive connection request at " + (System.currentTimeMillis()-timestart) + " milliseconds.");
-				Socket connectionSocket = null;
 				try {
 					connectionSocket = serverSocket.accept();
 				} catch (IOException e) {
@@ -98,7 +98,7 @@ class TCPServer
 					i = 1;
 					while(!waitAck(inFromClient)){
 						if(i == HOPS){
-							System.out.println("Failed! Timeout on receiving acknoledgment! Closing....");
+							System.out.println("Failed! Timeout on receiving acknoledgment!....");
 							break;
 						}
 						outToClient.writeBytes(returnMessage + "\n");
@@ -121,6 +121,8 @@ class TCPServer
 					System.out.println("Unknown command from client: \"" + operation + " " + key + " " + value + "\" at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 					break;
 				}
+				connectionSocket.close();
+				System.out.println("Client disconnected at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 			}
 		}
 	}
@@ -128,22 +130,20 @@ class TCPServer
 	public static boolean waitAck(BufferedReader in) throws IOException {
 		String ack = "";
 		boolean ret = false;
-		int i = 1;
-
-		serverSocket.setSoTimeout(timeout_ack);
+		connectionSocket.setSoTimeout(timeout_ack);
 		try {
 			ack = in.readLine(); // receive value packet from server
 			ack = ack.trim();
 			if (ack.matches("ack")) {
 				System.out.println("Acknowledgement received at "
 						+ (System.currentTimeMillis() - timestart)
-						+ " milliseconds. Try number " + i);
+						+ " milliseconds.");
 				ret = true;
 			}
 		} catch (SocketTimeoutException e) {
 			System.out.println("Timeout on acknowledgement at "
 					+ (System.currentTimeMillis() - timestart)
-					+ " milliseconds. Try number " + i);
+					+ " milliseconds.");
 		}
 		return ret;
 	}
