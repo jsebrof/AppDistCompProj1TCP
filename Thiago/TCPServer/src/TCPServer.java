@@ -70,16 +70,13 @@ class TCPServer
 				// get value from value packet
 				if (operation.matches("put")) // put operation requires a third "value" packet
 				{
-					try{
-						value = dataScanner.next();
-					}catch(InputMismatchException e){
-						
-					}
-					value = value.trim();
-					if(value.isEmpty()){
+					if(!dataScanner.hasNext()){
 						System.out.println("Insufficient arguments at" + (System.currentTimeMillis()-timestart) + " milliseconds");
 						break;
 					}
+					value = dataScanner.next();
+					value = value.trim();
+					
 				}
 				
 				// if no value packet was received, value string will be empty and not obstruct the code to follow
