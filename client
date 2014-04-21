@@ -1,0 +1,7 @@
+java TCPClient n02 9833
+put(1,2)
+put(3,4)
+put(5,6)
+put(7,8)
+put(9,0)
+
