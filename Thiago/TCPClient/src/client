@@ -1,0 +1,5 @@
+java TCPClient n02 9833 put 1 1
+java TCPClient n02 9833 put 2 2
+java TCPClient n02 9833 put 3 3
+java TCPClient n02 9833 put 4 4
+java TCPClient n02 9833 put 5 5
