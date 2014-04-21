@@ -48,7 +48,7 @@ class TCPClient
 			try {
 				clientSocket = new Socket(IPAddress, port);
 			} catch (IOException e) {
-				System.err.println("Could not connect to /" + IPAddress + ":" + port + " at" + (System.currentTimeMillis()-timestart) + " milliseconds.");
+				System.err.println("Could not connect to /" + IPAddress + ":" + port + " at " + (System.currentTimeMillis()-timestart) + " milliseconds.");
 				clientSocket.close();
 				System.exit(1);
 			}
