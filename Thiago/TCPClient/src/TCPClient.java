@@ -48,7 +48,7 @@ class TCPClient
 			try {
 				clientSocket = new Socket(IPAddress, port);
 			} catch (IOException e) {
-				System.err.println("Could not connect to " + IPAddress + ":" + port + ".");
+				System.err.println("Could not connect to /" + IPAddress + ":" + port + " at" + (System.currentTimeMillis()-timestart) + " milliseconds.");
 				clientSocket.close();
 				System.exit(1);
 			}
@@ -59,6 +59,16 @@ class TCPClient
 			String data = operation + " " + key + " " + value;
 			outToServer.writeBytes(data + "\n");
 			
+			//wait for an ACK
+			i = 1;
+			while(!waitAck(inFromServer)){
+				if(i == HOPS){
+					System.out.println("Failed! Timeout on receiving acknowledgment at " + (System.currentTimeMillis()-timestart) + "milliseconds.");
+					break;
+				}
+				outToServer.writeBytes(data + "\n");
+				i++;
+			}
 		
 			if (operation.toLowerCase().matches("get"))
 			{
@@ -69,30 +79,19 @@ class TCPClient
 				}
 				catch (SocketTimeoutException e)
 				{
-					System.out.println("Timeout on server at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+					System.out.println("Timeout on server at " + (System.currentTimeMillis()-timestart) + " milliseconds.");
 					break; // kill the sequence, as there is no returned packet to work with
 				}
-				System.out.println("Received from server: \"" + data.trim() + "\" at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+				System.out.println("Received from server: \"" + data.trim() + "\" at " + (System.currentTimeMillis()-timestart) + " milliseconds.");
 				sendAck(outToServer); //sends acknowledgment to server
-			}else{
-				//wait for an ACK
-				i = 1;
-				while(!waitAck(inFromServer)){
-					if(i == HOPS){
-						System.out.println("Failed! Timeout on receiving acknoledgment! Closing....");
-						break;
-					}
-					outToServer.writeBytes(data + "\n");
-					i++;
-				}
 			}
 			break; // end the client sequence
 		}
 		clientSocket.close();
-		System.out.println("Client Close at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+		System.out.println("Client Close at " + (System.currentTimeMillis()-timestart) + " milliseconds.");
 	}
 	
-	public static boolean waitAck(BufferedReader in) throws IOException{
+	private static boolean waitAck(BufferedReader in) throws IOException{
 		String ack = "";
 		boolean ret = false;
 		clientSocket.setSoTimeout(timeout_ack);
@@ -114,7 +113,7 @@ class TCPClient
 		return ret;
 	}
 	
-	public static void sendAck(DataOutputStream out) throws IOException{
+	private static void sendAck(DataOutputStream out) throws IOException{
 		out.writeBytes("ack" + "\n");
 		System.out.println("Acknowledgement sent at "
 				+ (System.currentTimeMillis() - timestart)

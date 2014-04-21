@@ -11,9 +11,9 @@ class TCPServer
 	static long timestart;
 	static ServerSocket serverSocket = null;
 	static Socket connectionSocket = null;
-	static int HOPS = 3;
-	static int timeout_ack = 500;
-	static int timeout_answer = 1000;
+	static final int HOPS = 3;
+	static final int timeout_ack = 500;
+	static final int timeout_answer = 1000;
 	public static void main(String args[]) throws Exception
 	{
 		int i;
@@ -57,6 +57,10 @@ class TCPServer
 				// get operation from operation packet
 				String operation = dataScanner.next();
 				operation = operation.trim().toLowerCase();
+				if(!(operation.matches("put") || operation.matches("get") || operation.matches("delete"))){
+					System.out.println("Incorrect command line arguments at " + (System.currentTimeMillis()-timestart) + " milliseconds");
+					break;
+				}
 				// get key from key packet
 				String key = dataScanner.next();
 				key = key.trim();
@@ -66,20 +70,28 @@ class TCPServer
 				if (operation.matches("put")) // put operation requires a third "value" packet
 				{
 					value = dataScanner.next();
+					value = value.trim();
+					if(value.isEmpty()){
+						System.out.println("Insufficient arguments at" + (System.currentTimeMillis()-timestart) + " milliseconds");
+						break;
+					}
 				}
-				value = value.trim();
+				
 				// if no value packet was received, value string will be empty and not obstruct the code to follow
+				
+				// after verify the packet received, sends ack to the client
+				sendAck(outToClient); //sends ACK to the client
 				
 				// get IP address and port of client
 				InetAddress IPAddress = connectionSocket.getInetAddress();
 				int clientPort = connectionSocket.getPort();
+				
 				System.out.println("Request from: " + IPAddress + ":" + clientPort + " for " + operation + " " + key + " " + value + " at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 				switch (operation) // depending on the requested operation
 				{
 				case "put":
 					store.put(key, value); // place key/value into the Map
 					System.out.println("Key \"" + key + "\" Value \"" + store.get(key) + "\" stored at " + (System.currentTimeMillis()-timestart) + " milliseconds");
-					sendAck(outToClient); //sends ACK to the client
 					break;
 				case "get":
 					String returnMessage;
@@ -115,19 +127,18 @@ class TCPServer
 					{
 						System.out.println("No value found in store for Key \"" + key + "\" at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 					}
-					sendAck(outToClient); //sends ACK to the client
 					break;
 				default:
 					System.out.println("Unknown command from client: \"" + operation + " " + key + " " + value + "\" at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 					break;
 				}
-				connectionSocket.close();
-				System.out.println("Client disconnected at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 			}
+			connectionSocket.close();
+			System.out.println("Client disconnected at " + (System.currentTimeMillis()-timestart) + " milliseconds");
 		}
 	}
 
-	public static boolean waitAck(BufferedReader in) throws IOException {
+	private static boolean waitAck(BufferedReader in) throws IOException {
 		String ack = "";
 		boolean ret = false;
 		connectionSocket.setSoTimeout(timeout_ack);
@@ -141,14 +152,14 @@ class TCPServer
 				ret = true;
 			}
 		} catch (SocketTimeoutException e) {
-			System.out.println("Timeout on acknowledgement at "
+			System.out.println("Timeout waiting for acknowledgement at "
 					+ (System.currentTimeMillis() - timestart)
 					+ " milliseconds.");
 		}
 		return ret;
 	}
 	
-	public static void sendAck(DataOutputStream out) throws IOException{
+	private static void sendAck(DataOutputStream out) throws IOException{
 		out.writeBytes("ack" + "\n");
 		System.out.println("Acknowledgement sent at "
 				+ (System.currentTimeMillis() - timestart)
