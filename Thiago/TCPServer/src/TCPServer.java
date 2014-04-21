@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.*;
 import java.util.HashMap;
+import java.util.InputMismatchException;
 import java.util.Scanner;
 
 class TCPServer
@@ -69,7 +70,11 @@ class TCPServer
 				// get value from value packet
 				if (operation.matches("put")) // put operation requires a third "value" packet
 				{
-					value = dataScanner.next();
+					try{
+						value = dataScanner.next();
+					}catch(InputMismatchException e){
+						
+					}
 					value = value.trim();
 					if(value.isEmpty()){
 						System.out.println("Insufficient arguments at" + (System.currentTimeMillis()-timestart) + " milliseconds");
