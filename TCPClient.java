@@ -46,14 +46,15 @@ public class TCPClient {
         System.out.print ("\nCommand: ");
         while ((userInput = stdIn.readLine()) != null) {
             out.println(userInput);
-            if (in.readLine() == null) 
-            {
+            if (userInput.toLowerCase().equals("exit")) {
+                System.out.println ("Connection with server " + echoSocket.getInetAddress() +
+                        ":" + echoSocket.getPort() + " terminates at " +
+                        (System.currentTimeMillis()-timestart) + " milliseconds"); 
                 System.exit(1);
-            } 
-            else 
-            {
-                System.out.println("Server> " + in.readLine());
             }
+                
+//            System.out.println("in.readLine = " + in.readLine());
+            System.out.println("Server> " + in.readLine());
             
             System.out.print("\nCommand: ");
         }

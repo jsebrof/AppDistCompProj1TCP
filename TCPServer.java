@@ -24,11 +24,11 @@ public class TCPServer
 
         Socket clientSocket = null; 
         System.out.println("Server Start at " + (System.currentTimeMillis() - timestart) 
-                + " milliseconds on port " + port + ".\nWaiting for connection.....");
+                + " milliseconds on port " + port + ".\nWaiting to receive messages.....");
 
         try { 
             clientSocket = serverSocket.accept(); 
-            //            System.out.println(clientSocket);
+
         } 
         catch (IOException e) 
         { 
@@ -47,8 +47,8 @@ public class TCPServer
                 new InputStreamReader( clientSocket.getInputStream())); 
 
         String inputLine; 
-        
-//        while ((inputLine = in.readLine()) != null) 
+
+        //        while ((inputLine = in.readLine()) != null) 
         while (true) 
         { 
             inputLine = in.readLine().trim();
@@ -56,7 +56,7 @@ public class TCPServer
             //            inputLine = inputLine.trim();
             String returnMessage = "Invalid request received from " + IPAddress + ":" +
                     clientPort + " at " + (System.currentTimeMillis()-timestart) +
-                    " milliseconds! Please try again!";
+                    " milliseconds. Please try again!";
 
             if (inputLine.endsWith(")")) {
                 inputLine = inputLine.substring(0, inputLine.length() - 1); 
@@ -68,14 +68,16 @@ public class TCPServer
 
                     if (store.containsKey(key)) 
                     {
-                        returnMessage = "Value \"" + store.get(key) + "\" for Key \"" + key +
+                        returnMessage = "GET request received from " + IPAddress + ":" +
+                                clientPort + " > Value \"" + store.get(key) + "\" for Key \"" + key +
                                 "\" returned to " + IPAddress + ":" + clientPort + " at " +
-                                (System.currentTimeMillis()-timestart) + " milliseconds";
+                                (System.currentTimeMillis()-timestart) + " milliseconds.";
                     }
                     else
                     {
-                        returnMessage = "No value found in store for Key \"" + key + "\" at " +
-                                (System.currentTimeMillis()-timestart) + " milliseconds";
+                        returnMessage = "GET request received from " + IPAddress + ":" +
+                                clientPort + " > No value found in store for Key \"" + key + "\" at " +
+                                (System.currentTimeMillis()-timestart) + " milliseconds.";
                     }
                 } 
                 else if (operation.equalsIgnoreCase("delete")) 
@@ -83,13 +85,15 @@ public class TCPServer
 
                     if (store.containsKey(key))
                     {
-                        returnMessage = "Key \"" + key + "\" Value \"" + store.get(key) +
+                        returnMessage = "DELETE request received from " + IPAddress + ":" +
+                                clientPort + " > Key \"" + key + "\" Value \"" + store.get(key) +
                                 "\" deleted at " + (System.currentTimeMillis()-timestart) + " milliseconds";
                         store.remove(key); // delete key/value from the Map
                     }
                     else
                     {
-                        returnMessage = "No value found in store for Key \"" + key + "\" at " +
+                        returnMessage = "DELETE request received from " + IPAddress + ":" +
+                                clientPort + " > No value found in store for Key \"" + key + "\" at " +
                                 (System.currentTimeMillis()-timestart) + " milliseconds";
                     }
                 }
@@ -100,18 +104,23 @@ public class TCPServer
                     String value = keySegs[1].trim();
                     store.put(key, value); // place key/value into the Map
 
-                    returnMessage = "Key \"" + key + "\" Value \"" + store.get(key) + "\" stored at " + (System.currentTimeMillis()-timestart) + " milliseconds";
+                    returnMessage = "PUT request received from " + IPAddress + ":" +
+                            clientPort + " > Key \"" + key + "\" Value \"" + store.get(key) + "\" stored at " +
+                            (System.currentTimeMillis()-timestart) + " milliseconds";
                 }
 
-                System.out.println ("Server: " + returnMessage); 
+                System.out.println ("\nServer> " + returnMessage); 
                 out.println(returnMessage); 
             }
-            else if (inputLine.equals("Exit")) 
+            else if (inputLine.toLowerCase().equals("exit")) 
             {
+                System.out.println ("Connection with client terminates at " +
+                        (System.currentTimeMillis()-timestart) + " milliseconds"); 
                 break;
-            } else 
+            } 
+            else 
             {
-                System.out.println ("Server: " + returnMessage); 
+                System.out.println ("\nServer> " + returnMessage); 
                 out.println(returnMessage); 
             }
 
